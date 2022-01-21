@@ -257,7 +257,7 @@ var libSaml = function () {
         * @return {string} base64 encoded string
         */
         constructSAMLSignature: function (opts) {
-            var rawSamlMessage = opts.rawSamlMessage, referenceTagXPath = opts.referenceTagXPath, privateKey = opts.privateKey, privateKeyPass = opts.privateKeyPass, _a = opts.signatureAlgorithm, signatureAlgorithm = _a === void 0 ? signatureAlgorithms.RSA_SHA256 : _a, _b = opts.transformationAlgorithms, transformationAlgorithms = _b === void 0 ? [
+            var rawSamlMessage = opts.rawSamlMessage, referenceTagXPath = opts.referenceTagXPath, privateKey = opts.privateKey, privateKeyPass = opts.privateKeyPass, _a = opts.signatureAlgorithm, signatureAlgorithm = _a === void 0 ? signatureAlgorithms.RSA_SHA1 : _a, _b = opts.transformationAlgorithms, transformationAlgorithms = _b === void 0 ? [
                 'http://www.w3.org/2000/09/xmldsig#enveloped-signature',
                 'http://www.w3.org/2001/10/xml-exc-c14n#',
             ] : _b, signingCert = opts.signingCert, signatureConfig = opts.signatureConfig, _c = opts.isBase64Output, isBase64Output = _c === void 0 ? true : _c, _d = opts.isMessageSigned, isMessageSigned = _d === void 0 ? false : _d;
