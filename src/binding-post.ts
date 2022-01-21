@@ -142,7 +142,7 @@ async function base64LoginResponse(requestInfo: any = {}, entity: any, user: any
     // step: sign assertion ? -> encrypted ? -> sign message ?
     if (metadata.sp.isWantAssertionsSigned()) {
       // console.debug('sp wants assertion signed');
-      rawSamlResponse = format(rawSamlResponse);
+    //   rawSamlResponse = format(rawSamlResponse);
       rawSamlResponse = libsaml.constructSAMLSignature({
         ...config,
         rawSamlMessage: rawSamlResponse,

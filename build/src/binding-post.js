@@ -77,7 +77,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var urn_1 = require("./urn");
 var libsaml_1 = __importDefault(require("./libsaml"));
 var utility_1 = __importStar(require("./utility"));
-var xml_formatter_1 = __importDefault(require("xml-formatter"));
 var binding = urn_1.wording.binding;
 /**
 * @desc Generate a base64 encoded login request
@@ -215,7 +214,7 @@ function base64LoginResponse(requestInfo, entity, user, customTagReplacement, en
                 // step: sign assertion ? -> encrypted ? -> sign message ?
                 if (metadata.sp.isWantAssertionsSigned()) {
                     // console.debug('sp wants assertion signed');
-                    rawSamlResponse = (0, xml_formatter_1.default)(rawSamlResponse);
+                    //   rawSamlResponse = format(rawSamlResponse);
                     rawSamlResponse = libsaml_1.default.constructSAMLSignature(__assign(__assign({}, config), { rawSamlMessage: rawSamlResponse, transformationAlgorithms: spSetting.transformationAlgorithms, referenceTagXPath: "/*[local-name(.)='Response']/*[local-name(.)='Assertion']", signatureConfig: {
                             prefix: 'ds',
                             location: { reference: "/*[local-name(.)='Response']/*[local-name(.)='Assertion']/*[local-name(.)='Issuer']", action: 'after' },
