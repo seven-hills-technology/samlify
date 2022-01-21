@@ -77,6 +77,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var urn_1 = require("./urn");
 var libsaml_1 = __importDefault(require("./libsaml"));
 var utility_1 = __importStar(require("./utility"));
+var xml_formatter_1 = __importDefault(require("xml-formatter"));
 var binding = urn_1.wording.binding;
 /**
 * @desc Generate a base64 encoded login request
@@ -151,111 +152,88 @@ function base64LoginResponse(requestInfo, entity, user, customTagReplacement, en
     if (user === void 0) { user = {}; }
     if (encryptThenSign === void 0) { encryptThenSign = false; }
     return __awaiter(this, void 0, void 0, function () {
-        var idpSetting, spSetting, id, metadata, nameIDFormat, selectedNameIDFormat, base, rawSamlResponse, nowTime, spEntityID, fiveMinutesLaterTime, fiveMinutesLater, now, acl, tvalue, template, privateKey, privateKeyPass, signatureAlgorithm, config, context;
+        var idpSetting, spSetting, id, metadata, nameIDFormat, selectedNameIDFormat, base, rawSamlResponse, nowTime, spEntityID, fiveMinutesLaterTime, fiveMinutesLater, now, acl, tvalue, template, privateKey, privateKeyPass, signatureAlgorithm, config;
         return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    idpSetting = entity.idp.entitySetting;
-                    spSetting = entity.sp.entitySetting;
-                    id = idpSetting.generateID();
-                    metadata = {
-                        idp: entity.idp.entityMeta,
-                        sp: entity.sp.entityMeta,
-                    };
-                    nameIDFormat = idpSetting.nameIDFormat;
-                    selectedNameIDFormat = Array.isArray(nameIDFormat) ? nameIDFormat[0] : nameIDFormat;
-                    if (!(metadata && metadata.idp && metadata.sp)) return [3 /*break*/, 3];
-                    base = metadata.sp.getAssertionConsumerService(binding.post);
-                    rawSamlResponse = void 0;
-                    nowTime = new Date();
-                    spEntityID = metadata.sp.getEntityID();
-                    fiveMinutesLaterTime = new Date(nowTime.getTime());
-                    fiveMinutesLaterTime.setMinutes(fiveMinutesLaterTime.getMinutes() + 5);
-                    fiveMinutesLater = fiveMinutesLaterTime.toISOString();
-                    now = nowTime.toISOString();
-                    acl = metadata.sp.getAssertionConsumerService(binding.post);
-                    tvalue = {
-                        ID: id,
-                        AssertionID: idpSetting.generateID(),
-                        Destination: base,
-                        Audience: spEntityID,
-                        EntityID: spEntityID,
-                        SubjectRecipient: acl,
-                        Issuer: metadata.idp.getEntityID(),
-                        IssueInstant: now,
-                        AssertionConsumerServiceURL: acl,
-                        StatusCode: urn_1.StatusCode.Success,
-                        // can be customized
-                        ConditionsNotBefore: now,
-                        ConditionsNotOnOrAfter: fiveMinutesLater,
-                        SubjectConfirmationDataNotOnOrAfter: fiveMinutesLater,
-                        NameIDFormat: selectedNameIDFormat,
-                        NameID: user.email || '',
-                        InResponseTo: (0, utility_1.get)(requestInfo, 'extract.request.id', ''),
-                        AuthnStatement: '',
-                        AttributeStatement: '',
-                    };
-                    if (idpSetting.loginResponseTemplate && customTagReplacement) {
-                        template = customTagReplacement(idpSetting.loginResponseTemplate.context);
-                        rawSamlResponse = (0, utility_1.get)(template, 'context', null);
+            idpSetting = entity.idp.entitySetting;
+            spSetting = entity.sp.entitySetting;
+            id = idpSetting.generateID();
+            metadata = {
+                idp: entity.idp.entityMeta,
+                sp: entity.sp.entityMeta,
+            };
+            nameIDFormat = idpSetting.nameIDFormat;
+            selectedNameIDFormat = Array.isArray(nameIDFormat) ? nameIDFormat[0] : nameIDFormat;
+            if (metadata && metadata.idp && metadata.sp) {
+                base = metadata.sp.getAssertionConsumerService(binding.post);
+                rawSamlResponse = void 0;
+                nowTime = new Date();
+                spEntityID = metadata.sp.getEntityID();
+                fiveMinutesLaterTime = new Date(nowTime.getTime());
+                fiveMinutesLaterTime.setMinutes(fiveMinutesLaterTime.getMinutes() + 5);
+                fiveMinutesLater = fiveMinutesLaterTime.toISOString();
+                now = nowTime.toISOString();
+                acl = metadata.sp.getAssertionConsumerService(binding.post);
+                tvalue = {
+                    ID: id,
+                    AssertionID: idpSetting.generateID(),
+                    Destination: base,
+                    Audience: spEntityID,
+                    EntityID: spEntityID,
+                    SubjectRecipient: acl,
+                    Issuer: metadata.idp.getEntityID(),
+                    IssueInstant: now,
+                    AssertionConsumerServiceURL: acl,
+                    StatusCode: urn_1.StatusCode.Success,
+                    // can be customized
+                    ConditionsNotBefore: now,
+                    ConditionsNotOnOrAfter: fiveMinutesLater,
+                    SubjectConfirmationDataNotOnOrAfter: fiveMinutesLater,
+                    NameIDFormat: selectedNameIDFormat,
+                    NameID: user.email || '',
+                    InResponseTo: (0, utility_1.get)(requestInfo, 'extract.request.id', ''),
+                    AuthnStatement: '',
+                    AttributeStatement: '',
+                };
+                if (idpSetting.loginResponseTemplate && customTagReplacement) {
+                    template = customTagReplacement(idpSetting.loginResponseTemplate.context);
+                    rawSamlResponse = (0, utility_1.get)(template, 'context', null);
+                }
+                else {
+                    if (requestInfo !== null) {
+                        tvalue.InResponseTo = requestInfo.extract.request.id;
                     }
-                    else {
-                        if (requestInfo !== null) {
-                            tvalue.InResponseTo = requestInfo.extract.request.id;
-                        }
-                        rawSamlResponse = libsaml_1.default.replaceTagsByValue(libsaml_1.default.defaultLoginResponseTemplate.context, tvalue);
-                    }
-                    privateKey = idpSetting.privateKey, privateKeyPass = idpSetting.privateKeyPass, signatureAlgorithm = idpSetting.requestSignatureAlgorithm;
-                    config = {
-                        privateKey: privateKey,
-                        privateKeyPass: privateKeyPass,
-                        signatureAlgorithm: signatureAlgorithm,
-                        signingCert: metadata.idp.getX509Certificate('signing'),
-                        isBase64Output: false,
-                    };
-                    // step: sign assertion ? -> encrypted ? -> sign message ?
-                    if (metadata.sp.isWantAssertionsSigned()) {
-                        // console.debug('sp wants assertion signed');
-                        rawSamlResponse = libsaml_1.default.constructSAMLSignature(__assign(__assign({}, config), { rawSamlMessage: rawSamlResponse, transformationAlgorithms: spSetting.transformationAlgorithms, referenceTagXPath: "/*[local-name(.)='Response']/*[local-name(.)='Assertion']", signatureConfig: {
-                                prefix: 'ds',
-                                location: { reference: "/*[local-name(.)='Response']/*[local-name(.)='Assertion']/*[local-name(.)='Issuer']", action: 'after' },
-                            } }));
-                    }
-                    // console.debug('after assertion signed', rawSamlResponse);
-                    // SAML response must be signed sign message first, then encrypt
-                    if (!encryptThenSign && (spSetting.wantMessageSigned || !metadata.sp.isWantAssertionsSigned())) {
-                        // console.debug('sign then encrypt and sign entire message');
-                        rawSamlResponse = libsaml_1.default.constructSAMLSignature(__assign(__assign({}, config), { rawSamlMessage: rawSamlResponse, isMessageSigned: true, transformationAlgorithms: spSetting.transformationAlgorithms, signatureConfig: spSetting.signatureConfig || {
-                                prefix: 'ds',
-                                location: { reference: "/*[local-name(.)='Response']/*[local-name(.)='Issuer']", action: 'after' },
-                            } }));
-                    }
-                    if (!idpSetting.isAssertionEncrypted) return [3 /*break*/, 2];
-                    return [4 /*yield*/, libsaml_1.default.encryptAssertion(entity.idp, entity.sp, rawSamlResponse)];
-                case 1:
-                    context = _a.sent();
-                    if (encryptThenSign) {
-                        //need to decode it
-                        rawSamlResponse = utility_1.default.base64Decode(context);
-                    }
-                    else {
-                        return [2 /*return*/, Promise.resolve({ id: id, context: context })];
-                    }
-                    _a.label = 2;
-                case 2:
-                    //sign after encrypting
-                    if (encryptThenSign && (spSetting.wantMessageSigned || !metadata.sp.isWantAssertionsSigned())) {
-                        rawSamlResponse = libsaml_1.default.constructSAMLSignature(__assign(__assign({}, config), { rawSamlMessage: rawSamlResponse, isMessageSigned: true, transformationAlgorithms: spSetting.transformationAlgorithms, signatureConfig: spSetting.signatureConfig || {
-                                prefix: 'ds',
-                                location: { reference: "/*[local-name(.)='Response']/*[local-name(.)='Issuer']", action: 'after' },
-                            } }));
-                    }
-                    return [2 /*return*/, Promise.resolve({
-                            id: id,
-                            context: utility_1.default.base64Encode(rawSamlResponse),
-                        })];
-                case 3: throw new Error('ERR_GENERATE_POST_LOGIN_RESPONSE_MISSING_METADATA');
+                    rawSamlResponse = libsaml_1.default.replaceTagsByValue(libsaml_1.default.defaultLoginResponseTemplate.context, tvalue);
+                }
+                privateKey = idpSetting.privateKey, privateKeyPass = idpSetting.privateKeyPass, signatureAlgorithm = idpSetting.requestSignatureAlgorithm;
+                config = {
+                    privateKey: privateKey,
+                    privateKeyPass: privateKeyPass,
+                    signatureAlgorithm: signatureAlgorithm,
+                    signingCert: metadata.idp.getX509Certificate('signing'),
+                    isBase64Output: false,
+                };
+                // step: sign assertion ? -> encrypted ? -> sign message ?
+                if (metadata.sp.isWantAssertionsSigned()) {
+                    // console.debug('sp wants assertion signed');
+                    rawSamlResponse = (0, xml_formatter_1.default)(rawSamlResponse);
+                    rawSamlResponse = libsaml_1.default.constructSAMLSignature(__assign(__assign({}, config), { rawSamlMessage: rawSamlResponse, transformationAlgorithms: spSetting.transformationAlgorithms, referenceTagXPath: "/*[local-name(.)='Response']/*[local-name(.)='Assertion']", signatureConfig: {
+                            prefix: 'ds',
+                            location: { reference: "/*[local-name(.)='Response']/*[local-name(.)='Assertion']/*[local-name(.)='Issuer']", action: 'after' },
+                        } }));
+                }
+                //sign after encrypting
+                if (encryptThenSign && (spSetting.wantMessageSigned || !metadata.sp.isWantAssertionsSigned())) {
+                    rawSamlResponse = libsaml_1.default.constructSAMLSignature(__assign(__assign({}, config), { rawSamlMessage: rawSamlResponse, isMessageSigned: true, transformationAlgorithms: spSetting.transformationAlgorithms, signatureConfig: spSetting.signatureConfig || {
+                            prefix: 'ds',
+                            location: { reference: "/*[local-name(.)='Response']/*[local-name(.)='Issuer']", action: 'after' },
+                        } }));
+                }
+                return [2 /*return*/, Promise.resolve({
+                        id: id,
+                        context: utility_1.default.base64Encode(rawSamlResponse),
+                    })];
             }
+            throw new Error('ERR_GENERATE_POST_LOGIN_RESPONSE_MISSING_METADATA');
         });
     });
 }

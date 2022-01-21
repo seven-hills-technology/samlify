@@ -9,6 +9,7 @@ import { BindingContext } from './entity';
 import libsaml from './libsaml';
 import utility, { get } from './utility';
 import { LogoutResponseTemplate } from './libsaml';
+import format from 'xml-formatter';
 
 const binding = wording.binding;
 
@@ -141,6 +142,7 @@ async function base64LoginResponse(requestInfo: any = {}, entity: any, user: any
     // step: sign assertion ? -> encrypted ? -> sign message ?
     if (metadata.sp.isWantAssertionsSigned()) {
       // console.debug('sp wants assertion signed');
+      rawSamlResponse = format(rawSamlResponse);
       rawSamlResponse = libsaml.constructSAMLSignature({
         ...config,
         rawSamlMessage: rawSamlResponse,
@@ -151,36 +153,6 @@ async function base64LoginResponse(requestInfo: any = {}, entity: any, user: any
           location: { reference: "/*[local-name(.)='Response']/*[local-name(.)='Assertion']/*[local-name(.)='Issuer']", action: 'after' },
         },
       });
-    }
-
-    // console.debug('after assertion signed', rawSamlResponse);
-
-    // SAML response must be signed sign message first, then encrypt
-    if (!encryptThenSign && (spSetting.wantMessageSigned || !metadata.sp.isWantAssertionsSigned())) {
-      // console.debug('sign then encrypt and sign entire message');
-      rawSamlResponse = libsaml.constructSAMLSignature({
-        ...config,
-        rawSamlMessage: rawSamlResponse,
-        isMessageSigned: true,
-        transformationAlgorithms: spSetting.transformationAlgorithms,
-        signatureConfig: spSetting.signatureConfig || {
-          prefix: 'ds',
-          location: { reference: "/*[local-name(.)='Response']/*[local-name(.)='Issuer']", action: 'after' },
-        },
-      });
-    }
-
-    // console.debug('after message signed', rawSamlResponse);
-
-    if (idpSetting.isAssertionEncrypted) {
-      // console.debug('idp is configured to do encryption');
-      const context = await libsaml.encryptAssertion(entity.idp, entity.sp, rawSamlResponse);
-      if (encryptThenSign) {
-        //need to decode it
-        rawSamlResponse = utility.base64Decode(context) as string;
-      } else {
-        return Promise.resolve({ id, context });
-      }
     }
 
     //sign after encrypting
